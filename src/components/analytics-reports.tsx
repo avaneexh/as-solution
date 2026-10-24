@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { fetchAnalyticsReports } from "@/app/admin/analytics-actions";
 import type { ReportState } from "@/lib/analytics-format";
+import { LoadingSkeleton } from "./loading-skeleton";
 export function AnalyticsReports() {
   const [reports, setReports] = useState<ReportState[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +13,7 @@ export function AnalyticsReports() {
     try {
       setReports(await fetchAnalyticsReports());
     } catch {
-      setError("Reports could not be loaded. Please sign in again or retry.");
+      setError("Your insights are temporarily unavailable.");
     } finally {
       setLoading(false);
     }
@@ -32,15 +33,39 @@ export function AnalyticsReports() {
         Provider reports refresh at most once every six hours when viewed.
         Refreshing this view reuses the stored report.
       </p>
-      {error && <p role="alert">{error}</p>}
+      {loading && !reports.length && <LoadingSkeleton compact />}
+      {error && (
+        <div className="report-notice" role="status">
+          <strong>{error}</strong>
+          <p>
+            {reports.some((item) => item.report)
+              ? "Your last available reports are shown below."
+              : "Refresh the page to reconnect and try again."}
+          </p>
+          <button
+            className="state-secondary"
+            onClick={() => window.location.reload()}
+          >
+            Reload page ↻
+          </button>
+        </div>
+      )}
       {reports.map((item) => (
-        <article key={item.provider} style={{ padding: "20px 0" }}>
+        <article key={item.provider} className="report-section">
           <h3>
             {item.provider === "ga4"
               ? "Google Analytics 4"
               : "Microsoft Clarity"}
           </h3>
-          {item.message && <p role="status">{item.message}</p>}
+          {item.message && (
+            <div className="report-notice" role="status">
+              <p>
+                {item.report
+                  ? "The latest update is taking longer than usual. Your previous report is available below."
+                  : "This report isn’t available yet. Please check back shortly."}
+              </p>
+            </div>
+          )}
           {item.report && (
             <>
               <p className="table-help">

@@ -1,4 +1,5 @@
 import "server-only";
+import { reportingConfig, reportingIssue } from "./analytics-config";
 import { createSign } from "node:crypto";
 import { serviceClient } from "./supabase/server";
 import {
@@ -21,11 +22,12 @@ async function jsonFetch(url: string, init?: RequestInit) {
   return response.json();
 }
 async function googleReport(): Promise<AnalyticsReport> {
+  const config = reportingConfig(process.env);
   const now = Math.floor(Date.now() / 1000);
   const encode = (value: unknown) =>
     Buffer.from(JSON.stringify(value)).toString("base64url");
   const unsigned = `${encode({ alg: "RS256", typ: "JWT" })}.${encode({
-    iss: process.env.GA4_CLIENT_EMAIL,
+    iss: config.email,
     scope: "https://www.googleapis.com/auth/analytics.readonly",
     aud: "https://oauth2.googleapis.com/token",
     iat: now,
@@ -33,7 +35,7 @@ async function googleReport(): Promise<AnalyticsReport> {
   })}`;
   const signature = createSign("RSA-SHA256")
     .update(unsigned)
-    .sign(process.env.GA4_PRIVATE_KEY!.replace(/\\n/g, "\n"), "base64url");
+    .sign(config.key, "base64url");
   const token = await jsonFetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -46,7 +48,7 @@ async function googleReport(): Promise<AnalyticsReport> {
     throw new Error("Google authentication did not return an access token.");
   const run = (metrics: string[], dimensions: string[] = [], limit = 10) =>
     jsonFetch(
-      `https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA4_PROPERTY_ID}:runReport`,
+      `https://analyticsdata.googleapis.com/v1beta/properties/${config.property}:runReport`,
       {
         method: "POST",
         headers: {
@@ -88,7 +90,7 @@ async function clarityReport(): Promise<AnalyticsReport> {
   const data = await jsonFetch(
     "https://www.clarity.ms/export-data/api/v1/project-live-insights?numOfDays=3",
     {
-      headers: { Authorization: `Bearer ${process.env.CLARITY_API_TOKEN}` },
+      headers: { Authorization: `Bearer ${reportingConfig(process.env).clarity}` },
     },
   );
   return { period: "Previous 72 hours · UTC", sections: claritySections(data) };
@@ -102,20 +104,8 @@ export async function loadProvider(
     fetchedAt: null,
     message: null,
   };
-  const ready =
-    provider === "ga4"
-      ? /^\d+$/.test(process.env.GA4_PROPERTY_ID || "") &&
-        process.env.GA4_CLIENT_EMAIL &&
-        process.env.GA4_PRIVATE_KEY
-      : process.env.CLARITY_API_TOKEN;
-  if (!ready)
-    return {
-      ...result,
-      message:
-        provider === "ga4"
-          ? "Setup required: GA4_PROPERTY_ID, GA4_CLIENT_EMAIL and GA4_PRIVATE_KEY in server environment."
-          : "Setup required: CLARITY_API_TOKEN in server environment.",
-    };
+  const issue = reportingIssue(provider, process.env);
+  if (issue) return { ...result, message: issue };
   try {
     const db = serviceClient();
     const claim = await db.rpc("claim_analytics_fetch", {
