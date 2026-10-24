@@ -14,7 +14,7 @@ Open http://127.0.0.1:3000. Without credentials the public website renders, but 
 
 ## Connect Supabase
 
-1. Create a Supabase project. Apply `supabase/migrations/001_initial.sql`, `002_admin_transactions.sql`, `003_hardening.sql`, and `004_reporting.sql`, in that order, to a **new project** using the Supabase SQL editor. These are versioned migrations, not scripts to run repeatedly.
+1. Create a Supabase project. Apply migrations `001_initial.sql` through `005_analytics_reports.sql`, in order, to a **new project** using the Supabase SQL editor. These are versioned migrations, not scripts to run repeatedly. For an existing project, apply only the missing migration. See [owner and reporting setup](docs/OWNER-REPORTING-SETUP.md).
 2. Put the project URL and publishable key in `.env.local`. Put the service-role key in `SUPABASE_SERVICE_ROLE_KEY` **on the server only**. It is used only for validated guest enquiries, durable abuse limiting and authenticated provider webhooks. Never expose it through a `NEXT_PUBLIC_` variable or a source-control commit.
 3. Set `NEXT_PUBLIC_SITE_URL` to the exact origin used in your browser (locally, `http://127.0.0.1:3000`). Origin verification protects form submissions; using `localhost` while this value is `127.0.0.1` will be rejected.
 4. In Supabase Auth URL configuration, set the site URL and allow `<origin>/auth/callback` and callback URLs with the `next` query parameter (including the encoded password-recovery return URL). Enable email confirmation. Configure your own SMTP provider before real customer onboarding, configure auth rate limits and use a strong password policy.
@@ -28,7 +28,7 @@ where id = (select id from auth.users where email = 'owner@example.com');
 
 Public signup always creates a client. User-controlled signup metadata cannot grant admin access. Promote only a verified account you own. Existing Auth users created before the migration need a corresponding `profiles` row.
 
-6. Sign in and visit `/admin`. Publish the initial website content. Subsequent editing, ordering, image/video upload, publication toggles, prices, contact details and tracking IDs are all available in **Website content**.
+6. Sign in and visit `/admin`. Website content and tracking controls are shown only for avaneesh.gupta5@gmail.com. This is UI-only visibility; existing admin server/database permissions remain unchanged. See the reporting setup guide for analytics credentials.
 
 ## What is implemented
 
@@ -80,7 +80,7 @@ The webhook validates GET verification and raw-body HMAC signatures, checks the 
 - Audit records capture the actor, action and entity, excluding full private note contents. The UI paginates the full change history.
 - No calendar synchronisation, payment processing, email notification queue, file-sharing portal or real-time campaign API reporting was specified. Booking changes are saved; the team contacts the customer separately.
 - Keep lead retention aligned with your published policy. Periodically remove expired `rate_limits` rows (e.g. older than one day) and old `webhook_messages` (e.g. older than 30 days) using your database maintenance process. Audit retention should be decided by the owner. Do not delete active webhook claims.
-- Analytics and heatmap reports live in their providers. The CRM does not fabricate visitor counts or import analytics reports without API credentials.
+- GA4 and Clarity aggregate reports are imported into the admin dashboard with server credentials and a six-hour durable cache. Heatmaps and recordings remain in Clarity. Missing credentials show setup instructions, not fabricated visitor counts.
 
 ## Validation
 

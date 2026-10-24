@@ -12,7 +12,7 @@ In Admin → Website content → Tracking, enter the IDs and publish. These are 
 
 No Google API key, GA Measurement Protocol secret, Meta access token, or Clarity export token is needed for the implemented browser tracking. Blank IDs disable integrations. Provider delivery has to be verified after entering real IDs; an 'ID configured' badge does not prove events were received.
 
-The admin dashboard currently shows database lead/booking statistics and links to provider dashboards. It does not import GA4 visitor reports, Meta advertising spend or Clarity reports. Those would require separate server-side reporting integrations and scoped account access. Meta Conversions API and Google Ads conversion tags are not currently implemented; do not paste their secrets into CMS fields. Microsoft here means Clarity, not Microsoft Advertising/UET.
+The admin dashboard imports GA4 audience/channel reports and Clarity aggregate metrics when server reporting credentials and migration 005 are configured. See [Owner and reporting setup](OWNER-REPORTING-SETUP.md). Website content and tracking controls are visible only to the designated email in the UI; existing admin database permissions remain unchanged. Meta ad spend, Meta Conversions API and Google Ads conversion tags are not implemented; do not paste their secrets into CMS fields. Microsoft here means Clarity, not Microsoft Advertising/UET.
 
 ## Consent and event behaviour
 

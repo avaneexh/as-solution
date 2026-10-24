@@ -18,6 +18,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { ContentEditor } from "./content-editor";
+import { AnalyticsReports } from "./analytics-reports";
 import { SignOut } from "./sign-out";
 import type { Content } from "@/lib/content";
 import type {
@@ -68,12 +69,14 @@ export function AdminDashboard({
   version,
   name,
   summary,
+  canEditContent,
 }: {
   leads: Lead[];
   content: Content;
   version: number;
   name: string;
   summary: AdminSummary;
+  canEditContent: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [search, setSearch] = useState("");
@@ -338,19 +341,21 @@ export function AdminDashboard({
         </Link>
         <span className="sidebar-label">WORKSPACE</span>
         <nav>
-          {tabs.map(([id, label, Icon]) => (
-            <button
-              key={id}
-              className={tab === id ? "active" : ""}
-              onClick={() => switchTab(id)}
-            >
-              <Icon size={18} />
-              {label}
-              {id === "leads" && (
-                <span className="nav-count">{totalLeads}</span>
-              )}
-            </button>
-          ))}
+          {tabs
+            .filter(([id]) => id !== "content" || canEditContent)
+            .map(([id, label, Icon]) => (
+              <button
+                key={id}
+                className={tab === id ? "active" : ""}
+                onClick={() => switchTab(id)}
+              >
+                <Icon size={18} />
+                {label}
+                {id === "leads" && (
+                  <span className="nav-count">{totalLeads}</span>
+                )}
+              </button>
+            ))}
         </nav>
         <div className="sidebar-bottom">
           <Link href="/" target="_blank">
@@ -642,7 +647,7 @@ export function AdminDashboard({
               {pagination}
             </section>
           )}
-          {tab === "content" && (
+          {tab === "content" && canEditContent && (
             <ContentEditor
               initial={content}
               initialVersion={version}
@@ -651,6 +656,7 @@ export function AdminDashboard({
           )}
           {tab === "analytics" && (
             <>
+              <AnalyticsReports />
               <div className="stat-grid">
                 <div className="stat-card">
                   <span>Lead-to-customer rate</span>
@@ -739,10 +745,10 @@ export function AdminDashboard({
                 ))}
               </div>
               <p className="table-help">
-                Configure IDs in Website content → Tracking. Website consent is
-                required. These panels show setup status, not verification that
-                the providers received events. Raw visitor and heatmap reports
-                live in their respective platforms.
+                Tracking settings appear in the designated account's Website content tab.
+                Collection requires visitor consent. Heatmaps and recordings
+                open in Clarity; aggregate reports appear above when server
+                credentials are configured.
               </p>
             </>
           )}

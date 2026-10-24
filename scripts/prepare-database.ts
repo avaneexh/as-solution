@@ -5,6 +5,7 @@ const names = [
   "002_admin_transactions.sql",
   "003_hardening.sql",
   "004_reporting.sql",
+  "005_analytics_reports.sql",
 ];
 const sql = names
   .map(

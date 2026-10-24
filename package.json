@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/consent.test.ts tests/database.test.ts tests/validation.test.ts",
+    "test": "tsx --test tests/consent.test.ts tests/database.test.ts tests/validation.test.ts tests/analytics.test.ts",
     "smoke": "node scripts/smoke.mjs",
     "format": "prettier --write src tests scripts *.ts *.json *.mjs"
   },

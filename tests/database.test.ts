@@ -289,5 +289,20 @@ test("PostgreSQL migrations, transactions, RLS and role boundaries", async (t) =
       );
     },
   );
+  await t.test("analytics cache is private and refresh claims are durable", async () => {
+    await role("postgres");
+    await db.exec(await readFile(new URL("../supabase/migrations/005_analytics_reports.sql", import.meta.url), "utf8"));
+    await role("authenticated", admin);
+    await assert.rejects(db.query("select * from analytics_reports"));
+    await assert.rejects(db.query("select claim_analytics_fetch('clarity')"));
+    const version = (await db.query<{version:number}>("select version from site_content")).rows[0].version;
+    await db.query("select publish_content($1,$2)", [JSON.stringify(defaultContent),version]);
+    await db.query("insert into storage.objects(bucket_id,name) values('site-media','admin.png')");
+    await role("service_role");
+    assert.equal((await db.query<{ok:boolean}>("select claim_analytics_fetch('clarity') ok")).rows[0].ok,true);
+    assert.equal((await db.query<{ok:boolean}>("select claim_analytics_fetch('clarity') ok")).rows[0].ok,false);
+    await db.exec("update analytics_reports set next_fetch_at=now()-interval '1 minute'");
+    assert.equal((await db.query<{ok:boolean}>("select claim_analytics_fetch('clarity') ok")).rows[0].ok,true);
+  });
   await db.close();
 });

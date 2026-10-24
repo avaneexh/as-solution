@@ -8,7 +8,7 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 export default async function Admin() {
-  const { db, profile } = await requireUser(true);
+  const { db, profile, user } = await requireUser(true);
   const [recent, summary, content] = await Promise.all([
     db.rpc("admin_records", { p_kind: "leads", p_limit: 6 }),
     db.rpc("admin_summary"),
@@ -20,6 +20,7 @@ export default async function Admin() {
     );
   return (
     <AdminDashboard
+      canEditContent={user.email?.toLowerCase() === "avaneesh.gupta5@gmail.com"}
       leads={recent.data.rows as Lead[]}
       summary={summary.data as AdminSummary}
       content={
