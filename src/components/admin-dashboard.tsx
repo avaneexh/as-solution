@@ -100,6 +100,7 @@ export function AdminDashboard({
   };
   useEffect(() => {
     if (!["leads", "customers", "bookings", "activity"].includes(tab)) return;
+    if (tab === "activity" && !canEditContent) return;
     let active = true;
     setLoading(true);
     setLoadError("");
@@ -126,7 +127,7 @@ export function AdminDashboard({
       active = false;
       clearTimeout(timeout);
     };
-  }, [tab, search, status, page, refreshKey]);
+  }, [tab, search, status, page, refreshKey, canEditContent]);
   const filtered = records.rows as Lead[];
   const bookings = records.rows as Booking[];
   const audit = records.rows as Audit[];
@@ -342,7 +343,7 @@ export function AdminDashboard({
         <span className="sidebar-label">WORKSPACE</span>
         <nav>
           {tabs
-            .filter(([id]) => id !== "content" || canEditContent)
+            .filter(([id]) => !["content", "activity"].includes(id) || canEditContent)
             .map(([id, label, Icon]) => (
               <button
                 key={id}
@@ -384,9 +385,6 @@ export function AdminDashboard({
             Workspace <ChevronRight size={13} />{" "}
             {tabs.find((t) => t[0] === tab)?.[1]}
           </span>
-          <div>
-            <span className="online-dot" /> Connected to Supabase
-          </div>
         </header>
         <main className="admin-content">
           <div className="admin-heading">
@@ -714,12 +712,6 @@ export function AdminDashboard({
                     "https://analytics.google.com/",
                   ],
                   [
-                    "Meta Pixel",
-                    content.tracking.pixel,
-                    "PageView, Lead and Schedule conversion events.",
-                    "https://business.facebook.com/events_manager2/",
-                  ],
-                  [
                     "Microsoft Clarity",
                     content.tracking.clarity,
                     "Heatmaps, scrolling and session recordings.",
@@ -752,7 +744,7 @@ export function AdminDashboard({
               </p>
             </>
           )}
-          {tab === "activity" && (
+          {tab === "activity" && canEditContent && (
             <section className="panel">
               <div className="panel-heading">
                 <h2>Change history</h2>
